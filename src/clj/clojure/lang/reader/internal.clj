@@ -21,10 +21,10 @@
 
 (def *autofn-syms* nil)
 
-(defn- get-or-set! [index themeta]
+(defn- get-or-set! [index]
   (if-let [sym (*autofn-syms* index)]
     sym
-    (let [sym (with-meta (gensym (str "p" index "__")) themeta)]
+    (let [sym (gensym (str "p" index "__"))]
       (when (and (number? index) 
                  (> index (:max *autofn-syms* -1)))
         (set! *autofn-syms* (assoc *autofn-syms* :max index)))
@@ -37,10 +37,10 @@
     (map? form) (into {} (map parse-autoarg form))
     (set? form) (into #{} (map parse-autoarg form))
     (seq? form) (doall (map parse-autoarg form))
-    (= form '%) (get-or-set! 1 ^form)
-    (= form '%&) (get-or-set! 'rest ^form)
+    (= form '%) (get-or-set! 1)
+    (= form '%&) (get-or-set! 'rest)
     (= (first (str form)) \%) 
-    (try (get-or-set! (Integer/parseInt (apply str (rest (str form)))) ^form) 
+    (try (get-or-set! (Integer/parseInt (apply str (rest (str form))))) 
          (catch NumberFormatException e 
            form))
     :else form))
