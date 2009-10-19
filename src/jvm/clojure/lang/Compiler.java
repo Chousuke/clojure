@@ -212,6 +212,9 @@ static final public Var LOADER = Var.create();
 static final public Var SOURCE = Var.intern(Namespace.findOrCreate(Symbol.create("clojure.core")),
                                             Symbol.create("*source-path*"), "NO_SOURCE_FILE");
 
+static final public Var READER_FN = Var.intern(Namespace.findOrCreate(Symbol.create("clojure.lang.reader")),
+                                            Symbol.create("read"), null, false);
+
 //String
 static final public Var SOURCE_PATH = Var.intern(Namespace.findOrCreate(Symbol.create("clojure.core")),
                                                  Symbol.create("*file*"), "NO_SOURCE_PATH");
@@ -5736,6 +5739,12 @@ public static Object loadFile(String file) throws Exception{
 		}
 }
 
+private static Object read(PushbackReader rdr, Object eof) throws Exception {
+  IFn reader = (IFn) READER_FN.deref();
+  return reader.invoke(rdr, eof);
+  //return clojure.reader.ClojureReader.read(rdr, eof);
+}
+
 public static Object load(Reader rdr) throws Exception{
 	return load(rdr, null, "NO_SOURCE_FILE");
 }
@@ -5761,8 +5770,8 @@ public static Object load(Reader rdr, String sourcePath, String sourceName) thro
 
 	try
 		{
-		for(Object r = LispReader.read(pushbackReader, false, EOF, false); r != EOF;
-		    r = LispReader.read(pushbackReader, false, EOF, false))
+		for(Object r = read(pushbackReader, EOF); r != EOF;
+		    r = read(pushbackReader, EOF))
 			{
 			LINE_AFTER.set(pushbackReader.getLineNumber());
 			ret = eval(r,false);
@@ -5894,8 +5903,8 @@ public static Object compile(Reader rdr, String sourcePath, String sourceName) t
 		                                            cv);
 		gen.visitCode();
 
-		for(Object r = LispReader.read(pushbackReader, false, EOF, false); r != EOF;
-		    r = LispReader.read(pushbackReader, false, EOF, false))
+		for(Object r = read(pushbackReader, EOF); r != EOF;
+		    r = read(pushbackReader, EOF))
 			{
 				LINE_AFTER.set(pushbackReader.getLineNumber());
 				compile1(gen, objx, r);
