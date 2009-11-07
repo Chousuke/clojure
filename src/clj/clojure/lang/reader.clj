@@ -37,7 +37,7 @@
     (make-rh-helper r [\n 0 0])))
 
 (defn- get-line [rh]
-  (let [r (nth rh 3)]
+  (let [r (nth (first rh) 3)]
     (if (instance? clojure.lang.LineNumberingPushbackReader r)
       (.getLineNumber #^clojure.lang.LineNumberingPushbackReader r)
       -1)))
