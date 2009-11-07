@@ -205,6 +205,8 @@
 
 ;;; Strings
 
+(declare unicode-escape) 
+
 (defn quote-or-error [rh]
   ; TODO: Any missing?
   (let [quotable {\" \"  
@@ -215,9 +217,11 @@
                   \f \formfeed}
         rh (advance rh)
         ch (get-char rh)]
-    (if-let [escaped (quotable ch)]
-      escaped
-      (reader-error rh "Unsupported escape character: \\%s" ch))))
+    (let [escaped (quotable ch)]
+      (cond escaped escaped
+            ;; hairy, but... should work.
+            (= \u ch) (unicode-escape rh (apply str (map get-char (take 5 (iterate advance rh)))))  
+            :else (reader-error rh "Unsupported escape character: \\%s" ch)))))
 
 (defmethod consume ::string [rh]
   (let [sb (new java.lang.StringBuilder)]
