@@ -328,6 +328,8 @@
     "nil" nil
     "true" true
     "false" false
+    "clojure.core//" 'clojure.core//
+    "/" '/
     (cond 
       (possible-number? string) (if-let [n (parse-number string)]
                                   n
