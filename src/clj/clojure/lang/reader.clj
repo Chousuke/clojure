@@ -8,8 +8,8 @@
                     (cons [obj] this)
                     (count [] 0)))
 
-; (def *skip* (new [] (toString [] "Object ignored by reader"))) 
-(def *skip* (Object. ))
+(def *skip* (reify Object
+                   (toString [] "Object ignored by Reader")))
 
 (def *non-token-chars* (set (seq "()[]{}\\\"'`@~")))
 
@@ -392,13 +392,19 @@
    (keyword? item)
    (symbol? item)))
 
+(defn consume-skipping [[item nrh]]
+  (if (identical? *skip* item)
+    (recur (consume (advance nrh)))
+    [item nrh]))
+
 (defmethod handle-prefix-macro ::metadata [rh]
   (let [[the-meta rh] (if (= \{ (get-char (advance rh 2)))
                  (consume-delimited (advance rh 3)
                                     #(= \} %)
                                     []
                                     #(apply hash-map %))
-                 (consume (advance rh 2)))]
+                 (consume-skipping
+                  (consume (advance rh 2))))]
     (loop [[item nrh] (consume (advance rh))]
       (cond 
         (identical? *skip* item) (recur (consume (advance nrh)))
@@ -414,7 +420,7 @@
            :error-if-not-imeta) 
          nrh]
         :else (reader-error rh 
-               "Metadata tag must be a string, a symbol or a keyword")))))
+               "Metadata tag must be a string, a symbol or a keyword. is: %s, class: %s", the-meta (class the-meta))))))
 
 (defn ignore-rest-of-line [rh]
   (loop [r rh]
